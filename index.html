@@ -1,1 +1,291 @@
-<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>BlobAnywhere Physics Simulation</title>\n    <style>\n        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }\n        #canvas { border: 1px solid black; display: block; margin: 20px auto; }\n        #controls { text-align: center; margin: 20px; }\n    </style>\n</head>\n<body>\n    <h1>BlobAnywhere Physics Simulation</h1>\n    <canvas id="canvas" width="800" height="600"></canvas>\n    <div id="controls">\n        <button onclick="startSimulation()">Start Simulation</button>\n        <button onclick="pauseSimulation()">Pause Simulation</button>\n        <button onclick="resetSimulation()">Reset Simulation</button>\n    </div>\n    <script>\n        let canvas = document.getElementById('canvas');\n        let context = canvas.getContext('2d');\n        let blobs = [];\n        let worms = [];\n        let simulationInterval;\n        class Blob {\n            constructor(x, y, radius) {\n                this.x = x;\n                this.y = y;\n                this.radius = radius;\n            }\n            draw() {\n                context.beginPath();\n                context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);\n                context.fillStyle = 'blue';\n                context.fill();\n                context.closePath();\n            }\n        }\n        class Worm {\n            constructor(x, y, length) {\n                this.x = x;\n                this.y = y;\n                this.length = length;\n            }\n            draw() {\n                context.fillStyle = 'green';\n                context.fillRect(this.x, this.y, 10, this.length);\n            }\n        }\n        function startSimulation() {\n            simulationInterval = setInterval(update, 1000 / 60);\n        }\n        function pauseSimulation() {\n            clearInterval(simulationInterval);\n        }\n        function resetSimulation() {\n            blobs = [];\n            worms = [];\n            context.clearRect(0, 0, canvas.width, canvas.height);\n        }\n        function update() {\n            context.clearRect(0, 0, canvas.width, canvas.height);\n            // Update and draw blobs and worms\n            blobs.forEach(blob => blob.draw());\n            worms.forEach(worm => worm.draw());\n        }\n        // Add initialization code here\n        function init() {\n            blobs.push(new Blob(100, 100, 20));\n            worms.push(new Worm(200, 200, 50));\n        }\n        window.onload = init;\n    <\/script>\n</body>\n</html>\n
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Physics Lab</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050505;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #bg-info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #222;
+            text-align: center;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- GUI STYLES --- */
+        .sim-gui { 
+            position: fixed; background: #111; color: #fff; border: 1px solid #444; 
+            z-index: 2147483647; padding: 12px; user-select: none; border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: opacity 0.2s, transform 0.2s; 
+        }
+        .sim-gui.hidden { opacity: 0; pointer-events: none; transform: translateY(-10px); }
+        .sim-header { 
+            padding: 6px; margin: -12px -12px 10px -12px; border-radius: 8px 8px 0 0; 
+            font-weight: bold; cursor: move; text-align: center; font-size: 11px; text-transform: uppercase; 
+        }
+        .sim-btn { 
+            width: 100%; padding: 8px; margin-top: 5px; cursor: pointer; border: none; 
+            border-radius: 4px; font-weight: bold; font-size: 11px; transition: 0.2s; 
+        }
+        .sim-label { font-size: 9px; color: #888; display: block; margin-top: 8px; font-weight: bold; }
+        input[type=range] { width: 100%; margin: 4px 0; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="bg-info">
+        <h1>PHYSICS TEST LAB</h1>
+        <p>PRESS <strong>TAB</strong> TO TOGGLE MENUS</p>
+    </div>
+
+    <div id="BLOB-SIM-ROOT" class="sim-gui" style="top: 20px; left: 20px; width: 200px; border-color: #00ff00;">
+        <div class="sim-header" style="background:#00ff00; color:#000">BLOB SETTINGS</div>
+        <button id="btn-spawn-b" class="sim-btn" style="background:#00ff00; color:#000">SPAWN BLOB</button>
+        <button id="btn-phys" class="sim-btn" style="background:#222; color:#00ff00; border:1px solid #00ff00">PHYS MOUSE: OFF</button>
+        <button id="btn-slice" class="sim-btn" style="background:#222; color:#00ffff; border:1px solid #00ffff">SLICER: OFF</button>
+        
+        <span class="sim-label">SOFTNESS</span>
+        <input type="range" id="sld-soft" min="5" max="50" value="15">
+        <span class="sim-label">GRAVITY</span>
+        <input type="range" id="sld-grav" min="0" max="30" value="8">
+        <span class="sim-label">SIZE</span>
+        <input type="range" id="sld-size" min="20" max="150" value="60">
+
+        <button id="btn-reset" class="sim-btn" style="background:#333; color:#fff; margin-top:15px">RESET DEFAULTS</button>
+        <button id="btn-clear-b" class="sim-btn" style="background:#422; color:#f88">CLEAR BLOBS</button>
+    </div>
+
+    <div id="WORM-LAB-ROOT" class="sim-gui" style="top: 20px; left: 240px; width: 180px; border-color: #ff00ff;">
+        <div class="sim-header" style="background:#ff00ff; color:#fff">WORM LAB</div>
+        <button id="btn-spawn-w" class="sim-btn" style="background:#ff00ff; color:#fff">SPAWN WORM</button>
+        <span class="sim-label">WORM LENGTH</span>
+        <input type="range" id="sld-w-len" min="5" max="60" value="15">
+        <span class="sim-label">WIGGLE INTENSITY</span>
+        <input type="range" id="sld-w-wig" min="0" max="100" value="15">
+        <button id="btn-kill-w" class="sim-btn" style="background:#422; color:#f88; margin-top:15px">KILL ALL WORMS</button>
+    </div>
+
+    <script>
+        /* --- CORE PHYSICS ENGINE --- */
+        let canvas, ctx;
+        let blobs = [];
+        let worms = [];
+        let mouse = { x: 0, y: 0, down: false, grabbedObj: null, physMode: false, sliceMode: false, sliceStart: null };
+        let guisShowing = true;
+        
+        const DEFAULTS = { timescale: 2, gravity: 0.8, damping: 0.94, softness: 0.15, size: 60, color: '#00ff00' };
+        let bSet = { ...DEFAULTS };
+        let wSet = { length: 15, wiggle: 1.5 };
+
+        function init() {
+            canvas = document.createElement('canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.style.position = 'fixed';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.pointerEvents = 'none';
+            document.body.appendChild(canvas);
+            ctx = canvas.getContext('2d');
+
+            setupEvents();
+            requestAnimationFrame(loop);
+        }
+
+        function setupEvents() {
+            const get = (id) => document.getElementById(id);
+            
+            get('btn-spawn-b').onclick = () => spawnBlob();
+            get('btn-spawn-w').onclick = () => spawnWorm();
+            get('btn-clear-b').onclick = () => blobs = [];
+            get('btn-kill-w').onclick = () => worms = [];
+
+            get('btn-phys').onclick = (e) => {
+                mouse.physMode = !mouse.physMode;
+                e.target.innerText = `PHYS MOUSE: ${mouse.physMode ? 'ON' : 'OFF'}`;
+                e.target.style.background = mouse.physMode ? '#00ff00' : '#222';
+                e.target.style.color = mouse.physMode ? '#000' : '#00ff00';
+            };
+
+            get('btn-slice').onclick = (e) => {
+                mouse.sliceMode = !mouse.sliceMode;
+                e.target.innerText = `SLICER: ${mouse.sliceMode ? 'ON' : 'OFF'}`;
+                e.target.style.background = mouse.sliceMode ? '#00ffff' : '#222';
+                e.target.style.color = mouse.sliceMode ? '#000' : '#00ffff';
+            };
+
+            get('sld-soft').oninput = (e) => bSet.softness = e.target.value / 100;
+            get('sld-grav').oninput = (e) => bSet.gravity = e.target.value / 10;
+            get('sld-size').oninput = (e) => bSet.size = parseInt(e.target.value);
+            get('sld-w-len').oninput = (e) => wSet.length = parseInt(e.target.value);
+            get('sld-w-wig').oninput = (e) => wSet.wiggle = e.target.value / 10;
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === "Tab") {
+                    e.preventDefault(); 
+                    guisShowing = !guisShowing;
+                    document.querySelectorAll('.sim-gui').forEach(el => el.classList.toggle('hidden', !guisShowing));
+                }
+            });
+
+            // Dragging Logic
+            document.querySelectorAll('.sim-gui').forEach(menu => {
+                const header = menu.querySelector('.sim-header');
+                let isDragging = false, ox, oy;
+                header.onmousedown = (e) => { isDragging = true; ox = e.clientX - menu.offsetLeft; oy = e.clientY - menu.offsetTop; };
+                window.addEventListener('mousemove', (e) => { if(isDragging) { menu.style.left = (e.clientX-ox)+'px'; menu.style.top = (e.clientY-oy)+'px'; } });
+                window.addEventListener('mouseup', () => isDragging = false);
+            });
+
+            // Mouse Interaction
+            window.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.sim-gui')) return;
+                if (mouse.sliceMode) { mouse.sliceStart = {x: e.clientX, y: e.clientY}; return; }
+                mouse.down = true; mouse.x = e.clientX; mouse.y = e.clientY;
+                worms.forEach(w => { if(Math.hypot(w.segments[0].x-mouse.x, w.segments[0].y-mouse.y) < 50) mouse.grabbedObj = w; });
+                if(!mouse.grabbedObj) blobs.forEach(b => {
+                    let bx = b.points.reduce((s,p)=>s+p.x,0)/b.points.length, by = b.points.reduce((s,p)=>s+p.y,0)/b.points.length;
+                    if (Math.hypot(bx - mouse.x, by - mouse.y) < b.size * 1.2) mouse.grabbedObj = b;
+                });
+            });
+
+            window.addEventListener('mouseup', (e) => {
+                if (mouse.sliceMode && mouse.sliceStart) { sliceBlobs(mouse.sliceStart, {x: e.clientX, y: e.clientY}); mouse.sliceStart = null; }
+                mouse.down = false; mouse.grabbedObj = null;
+            });
+            window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+            window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+        }
+
+        class Worm {
+            constructor(x, y, len, wig) {
+                this.segments = [];
+                this.timer = Math.random() * 100;
+                this.wiggle = wig;
+                this.distLimit = 7;
+                for (let i = 0; i < len; i++) this.segments.push({ x: x, y: y + (i * this.distLimit), vx: 0, vy: 0 });
+            }
+            update() {
+                this.timer += 0.04;
+                let head = this.segments[0];
+                if (mouse.down && mouse.grabbedObj === this) {
+                    head.vx = (mouse.x - head.x) * 0.2; head.vy = (mouse.y - head.y) * 0.2;
+                } else {
+                    head.vx += Math.cos(this.timer) * 0.5; head.vy += Math.sin(this.timer * 0.5) * this.wiggle + 0.2;
+                }
+                head.vx *= 0.9; head.vy *= 0.9; head.x += head.vx; head.y += head.vy;
+
+                for (let i = 1; i < this.segments.length; i++) {
+                    let p = this.segments[i], prev = this.segments[i-1];
+                    p.vy += 0.15; p.vx *= 0.92; p.vy *= 0.92;
+                    p.x += p.vx; p.y += p.vy;
+                    let dx = p.x - prev.x, dy = p.y - prev.y, d = Math.hypot(dx, dy);
+                    if (d > this.distLimit) {
+                        let a = Math.atan2(dy, dx);
+                        p.x = prev.x + Math.cos(a) * this.distLimit;
+                        p.y = prev.y + Math.sin(a) * this.distLimit;
+                    }
+                }
+                this.segments.forEach(p => {
+                    if (p.y > window.innerHeight - 5) { p.y = window.innerHeight - 5; p.vy = 0; }
+                    if (p.x < 5 || p.x > window.innerWidth - 5) { p.x = p.x < 5 ? 5 : window.innerWidth - 5; p.vx = 0; }
+                });
+            }
+        }
+
+        function spawnBlob(x, y, customSize) {
+            const b = { points: [], softness: bSet.softness, gravity: bSet.gravity, size: customSize || bSet.size, damping: bSet.damping, color: bSet.color };
+            const sx = x || window.innerWidth / 2, sy = y || window.innerHeight / 2;
+            for (let i = 0; i < 18; i++) {
+                let a = (i / 18) * Math.PI * 2;
+                b.points.push({ x: sx + Math.cos(a) * b.size, y: sy + Math.sin(a) * b.size, vx: 0, vy: 0, angle: a });
+            }
+            blobs.push(b);
+        }
+
+        function spawnWorm() {
+            worms.push(new Worm(window.innerWidth/2, window.innerHeight/3, wSet.length, wSet.wiggle));
+        }
+
+        function sliceBlobs(p1, p2) {
+            let toRemove = [], toAdd = [];
+            blobs.forEach((b, idx) => {
+                let cx = b.points.reduce((s,p)=>s+p.x,0)/b.points.length, cy = b.points.reduce((s,p)=>s+p.y,0)/b.points.length;
+                let d = Math.abs((p2.y-p1.y)*cx - (p2.x-p1.x)*cy + p2.x*p1.y - p2.y*p1.x) / Math.hypot(p2.y-p1.y, p2.x-p1.x);
+                if (d < b.size) {
+                    toRemove.push(idx);
+                    toAdd.push({x: cx - 20, y: cy, size: b.size * 0.7});
+                    toAdd.push({x: cx + 20, y: cy, size: b.size * 0.7});
+                }
+            });
+            blobs = blobs.filter((_, i) => !toRemove.includes(i));
+            toAdd.forEach(a => spawnBlob(a.x, a.y, a.size));
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let s = 0; s < bSet.timescale; s++) {
+                blobs.forEach(b => {
+                    let cx = b.points.reduce((s, p) => s + p.x, 0) / b.points.length, cy = b.points.reduce((s, p) => s + p.y, 0) / b.points.length;
+                    if (mouse.down && b === mouse.grabbedObj) { cx += (mouse.x - cx) * 0.1; cy += (mouse.y - cy) * 0.1; }
+                    b.points.forEach(p => {
+                        let tx = cx + Math.cos(p.angle) * b.size, ty = cy + Math.sin(p.angle) * b.size;
+                        p.vx += (tx - p.x) * b.softness; p.vy += (ty - p.y) * b.softness + b.gravity;
+                        if (mouse.physMode) {
+                            let d = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+                            if (d < 150) { let f = (150 - d) * 0.12; p.vx += ((p.x-mouse.x)/d)*f; p.vy += ((p.y-mouse.y)/d)*f; }
+                        }
+                        p.vx *= b.damping; p.vy *= b.damping; p.x += p.vx; p.y += p.vy;
+                        if (p.y > canvas.height - 5) { p.y = canvas.height - 5; p.vy *= -0.5; }
+                    });
+                });
+                // Blob Collision
+                for(let i=0; i<blobs.length; i++){
+                    for(let j=i+1; j<blobs.length; j++){
+                        let b1 = blobs[i], b2 = blobs[j], c1x = b1.points.reduce((s,p)=>s+p.x,0)/b1.points.length, c1y = b1.points.reduce((s,p)=>s+p.y,0)/b1.points.length,
+                            c2x = b2.points.reduce((s,p)=>s+p.x,0)/b2.points.length, c2y = b2.points.reduce((s,p)=>s+p.y,0)/b2.points.length,
+                            d = Math.hypot(c2x-c1x, c2y-c1y), min = b1.size + b2.size;
+                        if(d < min) { let f = (min-d)*0.04, nx=(c2x-c1x)/d, ny=(c2y-c1y)/d; b1.points.forEach(p=>{p.vx-=nx*f; p.vy-=ny*f}); b2.points.forEach(p=>{p.vx+=nx*f; p.vy+=ny*f}); }
+                    }
+                }
+                worms.forEach(w => w.update());
+            }
+            // Draw
+            if (mouse.sliceMode && mouse.sliceStart) {
+                ctx.beginPath(); ctx.strokeStyle = '#0ff'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
+                ctx.moveTo(mouse.sliceStart.x, mouse.sliceStart.y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke(); ctx.setLineDash([]);
+            }
+            blobs.forEach(b => {
+                ctx.beginPath(); ctx.fillStyle = b.color + 'AA'; ctx.strokeStyle = b.color; ctx.lineWidth = 2;
+                for(let i=0; i<b.points.length; i++) {
+                    let p1 = b.points[i], p2 = b.points[(i+1)%b.points.length], mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+                    if(i===0) ctx.moveTo(mx,my); else ctx.quadraticCurveTo(p1.x,p1.y,mx,my);
+                }
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+            });
+            worms.forEach(w => {
+                ctx.beginPath(); ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.strokeStyle = '#ff00ff';
+                ctx.moveTo(w.segments[0].x, w.segments[0].y); w.segments.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
+            });
+            requestAnimationFrame(loop);
+        }
+
+        init();
+    </script>
+</body>
+</html>
