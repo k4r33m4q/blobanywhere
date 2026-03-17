@@ -1,3 +1,5 @@
+NOTE: THE FIREFOX VERSION IS CURRENTLY BEING PROCESSED BY MOZILLA, IT WILL BE AN OFFICIAL ADD ON
+
 # BlobAnywhere   
 
 A browser extension that brings playful physics simulations to any webpage.
