@@ -1,4 +1,4 @@
-NOTE: THE FIREFOX VERSION IS CURRENTLY BEING PROCESSED BY MOZILLA, IT WILL BE AN OFFICIAL ADD ON
+lets go!!! FIREFOX VERSION IS HERE BABY: https://addons.mozilla.org/en-US/firefox/addon/blobanywhere/
 
 # BlobAnywhere   
 
